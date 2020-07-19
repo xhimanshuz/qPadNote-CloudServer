@@ -1,17 +1,29 @@
+CONFIG -= qt
+#CONFIG += console
+
 HEADERS += \
-    include/cloudSession.h \
-    include/cloudserverengine.h \
-    include/data.h
+    include/Block.h \
+    include/Protocol.h \
+    include/cloudserver.h \
+    include/mongocxxinterface.h \
+    include/sessionhandler.h
 
 SOURCES += \
-    src/Run.cpp \
-    src/cloudSession.cpp \
-    src/cloudserverengine.cpp
+    Run.cpp \
+    src/Block.cpp \
+    src/cloudserver.cpp \
+    src/mongocxxinterface.cpp \
+    src/sessionhandler.cpp
 
-INCLUDEPATH += include
+INCLUDEPATH += include \
+               /usr/local/include/mongocxx/v_noabi \
+               /usr/local/include/bsoncxx/v_noabi
+
+LIBS += -L/usr/local/lib -lmongocxx -lbsoncxx
 
 LIBS += -lpthread
 
 DESTDIR = $$PWD/build
 
-DISTFILES += build/setting.json
+DISTFILES += build/setting.json \
+             README.md
