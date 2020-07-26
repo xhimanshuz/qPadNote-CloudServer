@@ -38,6 +38,7 @@ public:
 
     bool removeBlock(int64_t _id);
     bool removeBlocks(int32_t uid, std::string tid);
+    bool removeTab(std::string tid);
 };
 
 #endif // MONGOCXXINTERFACE_H

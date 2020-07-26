@@ -1,11 +1,23 @@
 #include "sessionhandler.h"
 
-SessionHandler::SessionHandler(std::unique_ptr<boost::asio::ip::tcp::socket> _socket): socket(std::move(_socket))
+int SessionHandler::getSessionId() const
 {
+    return sessionId;
+}
+
+void SessionHandler::makeObsolete(bool value)
+{
+    obsolete = value;
+}
+
+SessionHandler::SessionHandler(std::unique_ptr<boost::asio::ip::tcp::socket> _socket):sessionId(0), obsolete{false}, socket(std::move(_socket))
+{
+    sessionId = rand();
+    std::cout<<"[!] Session Created with id: "<< sessionId<<std::endl;
     mongocxx = MongocxxInterface::get();
 
     //    socket->send(boost::asio::buffer("You are connected"));
-    receiveHeader();
+    //    receiveHeader();
 }
 
 void SessionHandler::sendData()
@@ -38,7 +50,7 @@ void SessionHandler::receiveHeader()
 
     if(header.type == Protocol::TYPE::HEADER)
     {
-        std::cout<<"[!] HEADER Recived size: "<< readSize<<std::endl;
+        std::cout<<"[!] HEADER Recived size: "<< readSize<<"\n"<< std::endl;
         switch(header.body)
         {
         case Protocol::TYPE::BLOCK:
@@ -78,7 +90,6 @@ void SessionHandler::receiveBlocks(uint16_t size, uint8_t quantity)
     {
         mongocxx->putBlock(blocks[i]);
     }
-
 }
 
 void SessionHandler::removeBlock()
@@ -100,7 +111,7 @@ void SessionHandler::removeBlocks()
 void SessionHandler::requestHandle()
 {
     std::cout<< "[!] Request Received\n";
-    Protocol::Request::BlockRequest request;
+    Protocol::Request::RequestBlock request;
     auto receive_size = socket->read_some(boost::asio::buffer(&request, sizeof(request)));
     std::cout<<"Request Received Size: "<< receive_size<< " Type: "<< request.type<<std::endl;
 
@@ -110,11 +121,20 @@ void SessionHandler::requestHandle()
         BlocksAllRequest(request.uid);
         break;
     case Protocol::Request::TYPE::BLOCKS_TAB_REQ:
+    {
         BlocksTabRequest(request.uid, std::string(request.tid));
         break;
+    }
+    case Protocol::Request::TYPE::DELETE_TAB_REQ:
+    {
+        deleteTab(request.tid);
+        break;
+    }
     default:
+    {
         std::cout<<"[E] Invalid Request!\n";
         break;
+    }
     }
 }
 
@@ -132,6 +152,34 @@ void SessionHandler::BlocksAllRequest(int16_t uid)
     auto blockVector = mongocxx->getBlocks("uid", uid);
 
     sendBlocks(blockVector);
+}
+
+bool SessionHandler::isObsolete()
+{
+    return obsolete;
+}
+
+bool SessionHandler::start()
+{
+    receiveHeader();
+}
+
+void SessionHandler::deleteTab(std::string tid)
+{
+    std::cout<<"[!] Removing Tab Requested for tid: "<< tid<<std::endl;
+
+    if(!mongocxx->removeTab(tid))
+    {
+        std::cout<<"[E] Error in removing tab with tid: "<< tid <<std::endl;
+        return;
+    }
+    std::cout<< "[!] Successfully remove tab with tid: "<< tid<< std::endl;
+
+}
+
+void SessionHandler::renameTab(std::string tid, std::string new_tid)
+{
+
 }
 
 void SessionHandler::sendBlocks(std::vector<Protocol::Block> blocksVector)
@@ -169,6 +217,6 @@ bool SessionHandler::sendHeader(Protocol::TYPE _type, Protocol::TYPE _body, uint
 SessionHandler::~SessionHandler()
 {
     std::cout<<"[!] Session for socket: "<< socket->remote_endpoint()<<" is disconnected!\n";
-    //    socket->shutdown(boost::asio::ip::tcp::socket::shutdown_type::shutdown_both);
+    socket->close();
 }
 

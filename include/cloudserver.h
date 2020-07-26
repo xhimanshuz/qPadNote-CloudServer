@@ -14,6 +14,7 @@ class CloudServer
 public:
     explicit CloudServer(std::shared_ptr<boost::asio::io_context> _ioc);
     std::shared_ptr<boost::asio::ip::tcp::acceptor> acceptor;
+    void sessionRefresh();
 
     void acceptConnection();
 };

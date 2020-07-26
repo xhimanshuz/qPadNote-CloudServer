@@ -144,6 +144,20 @@ bool MongocxxInterface::removeBlocks(int32_t uid, std::string tid)
     return true;
 }
 
+bool MongocxxInterface::removeTab(std::string tid)
+{
+    try
+    {
+        blockCollection.delete_many(bsoncxx::builder::stream::document()<< "tid"<< tid << bsoncxx::builder::stream::finalize);
+    }
+    catch(mongocxx::exception e)
+    {
+        std::cout<<"[E] Exception Occured! Error in deleting tab with tid: "<< tid<< std::endl;
+        return false;
+    }
+    return true;
+}
+
 
 std::vector<Protocol::Block> MongocxxInterface::getBlocks(std::string key, int value)
 {

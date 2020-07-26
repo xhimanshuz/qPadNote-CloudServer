@@ -7,6 +7,24 @@ CloudServer::CloudServer(std::shared_ptr<boost::asio::io_context> _ioc): ioc(std
     acceptConnection();
 }
 
+void CloudServer::sessionRefresh()
+{
+    std::vector<std::vector<std::shared_ptr<SessionHandler>>::iterator> sessionToDelete;
+
+    for(auto i=sessionVector.begin(); i!=sessionVector.end(); i++)
+    {
+        if(i->get()->isObsolete())
+        {
+            std::cout<<"[!] Session is obsolute now, Removing Session: "<< i->get()->socket->remote_endpoint();
+            sessionToDelete.push_back(i);
+            i->reset();
+        }
+    }
+
+    for(auto i: sessionToDelete)
+        sessionVector.erase(i);
+}
+
 void CloudServer::acceptConnection()
 {
     std::cout<<"[!] Waiting to Accept Connections"<<std::endl;
@@ -20,8 +38,20 @@ void CloudServer::acceptConnection()
         }
 
         std::cout<< "[!] Incoming connection, Socket Created: "<< socket.remote_endpoint()<<std::endl;
-        sessionVector.push_back(std::make_shared<SessionHandler>(std::make_unique<boost::asio::ip::tcp::socket>(std::move(socket) )) );
+        auto session = std::make_shared<SessionHandler>(std::make_unique<boost::asio::ip::tcp::socket>(std::move(socket)));
+        sessionVector.push_back(session);
+        try
+        {
+            session->start();
+        }
+        catch (boost::system::system_error se)
+        {
+            std::cout<<"[E] Exception in session: "<< session->getSessionId()<<" ERROR: " << se.code().value()<<" : "<< se.what()<<" -> " <<std::endl;
+            session->makeObsolete();
+            sessionRefresh();
+        }
 
+        sessionRefresh();
         acceptConnection();
     });
 }
