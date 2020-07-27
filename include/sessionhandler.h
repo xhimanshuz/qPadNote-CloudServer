@@ -28,7 +28,7 @@ public:
     bool isObsolete();
     bool start();
     void deleteTab(std::string tid = "");
-    void renameTab(std::string tid, std::string new_tid);
+    void renameTabRequest();
 
     void sendBlocks(std::vector<Protocol::Block> blockVector);
     bool sendHeader(Protocol::TYPE _type, Protocol::TYPE _body, uint16_t _bodySize, uint8_t _quantity);

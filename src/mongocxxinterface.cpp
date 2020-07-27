@@ -158,6 +158,23 @@ bool MongocxxInterface::removeTab(std::string tid)
     return true;
 }
 
+bool MongocxxInterface::renameTab(std::string xtid, std::string tid)
+{
+    std::cout<<"[!] Renaming Tab with tid: "<< tid <<" xtid: "<< xtid<<std::endl;
+    try
+    {
+        blockCollection.update_many(bsoncxx::builder::stream::document() <<"tid"<< xtid<< bsoncxx::builder::stream::finalize
+                                    , bsoncxx::builder::stream::document()<< "$set"<< bsoncxx::builder::stream::open_document<<"tid"<<tid
+                                    << bsoncxx::builder::stream::close_document<<bsoncxx::builder::stream::finalize);
+    }
+    catch(mongocxx::exception e)
+    {
+        std::cout<<"[E] Exception Occured! Error in deleting tab with tid: "<< tid<< std::endl;
+        return false;
+    }
+    return true;
+}
+
 
 std::vector<Protocol::Block> MongocxxInterface::getBlocks(std::string key, int value)
 {

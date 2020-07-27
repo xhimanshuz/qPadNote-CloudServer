@@ -50,7 +50,7 @@ void SessionHandler::receiveHeader()
 
     if(header.type == Protocol::TYPE::HEADER)
     {
-        std::cout<<"[!] HEADER Recived size: "<< readSize<<"\n"<< std::endl;
+        std::cout<<"[!] HEADER Recived size: "<< readSize<<" "<< header.toJson()<< std::endl;
         switch(header.body)
         {
         case Protocol::TYPE::BLOCK:
@@ -113,7 +113,7 @@ void SessionHandler::requestHandle()
     std::cout<< "[!] Request Received\n";
     Protocol::Request::RequestBlock request;
     auto receive_size = socket->read_some(boost::asio::buffer(&request, sizeof(request)));
-    std::cout<<"Request Received Size: "<< receive_size<< " Type: "<< request.type<<std::endl;
+    std::cout<<"[!] Request Received Size: "<< receive_size<< " Type: "<< request.type<<std::endl;
 
     switch(request.type)
     {
@@ -128,6 +128,11 @@ void SessionHandler::requestHandle()
     case Protocol::Request::TYPE::DELETE_TAB_REQ:
     {
         deleteTab(request.tid);
+        break;
+    }
+    case Protocol::Request::TYPE::RENAME_TAB_REQ:
+    {
+        renameTabRequest();
         break;
     }
     default:
@@ -177,9 +182,13 @@ void SessionHandler::deleteTab(std::string tid)
 
 }
 
-void SessionHandler::renameTab(std::string tid, std::string new_tid)
+void SessionHandler::renameTabRequest()
 {
+    Protocol::Request::RenameTabRequest rtr;
+    auto rsize = socket->read_some(boost::asio::buffer(&rtr, sizeof(rtr)));
+    std::cout<<"[!] Rename Tab Reqested with old tid: "<< rtr.xtid << " new tid: "<< rtr.tid<<std::endl;
 
+    mongocxx->renameTab(rtr.xtid, rtr.tid);
 }
 
 void SessionHandler::sendBlocks(std::vector<Protocol::Block> blocksVector)
