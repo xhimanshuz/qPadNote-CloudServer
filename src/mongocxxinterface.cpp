@@ -40,7 +40,7 @@ std::vector<Protocol::Block> MongocxxInterface::getBlocks()
         return vectorBlock;
 }
 
-bool MongocxxInterface::putBlock(int64_t _id, const std::string tid, int32_t uid, bool isDone, const std::string title, const std::string substring)
+bool MongocxxInterface::putBlock(int64_t _id, const std::string tid, int32_t uid, bool isDone, const std::string title, const std::string substring, int32_t hash)
 {
 //    auto blockValue = bsoncxx::builder::stream::document{}
 //            << "_id" << _id
@@ -51,7 +51,7 @@ bool MongocxxInterface::putBlock(int64_t _id, const std::string tid, int32_t uid
 //            << "substring" << substring
 //            << bsoncxx::builder::stream::finalize;
 
-    Protocol::Block block(_id, tid, uid, isDone, title, substring);
+    Protocol::Block block(_id, tid, uid, isDone, title, substring, hash);
     return putBlock(block);
 }
 
@@ -69,11 +69,12 @@ bool MongocxxInterface::putBlock(Protocol::Block &block)
         try
         {
             blockCollection.update_one(bsoncxx::builder::stream::document() <<"_id"<< block._id<< bsoncxx::builder::stream::finalize,
-                                        bsoncxx::builder::stream::document()<< "$set"
-                                        << bsoncxx::builder::stream::open_document
-                                        << "tid"<< block.tid << "uid"<< block.uid<< "isDone"<< block.isDone << "title" << block.title<< "substring"<< block.substring<<
-                                        bsoncxx::builder::stream::close_document<<
-                                        bsoncxx::builder::stream::finalize);
+                                       bsoncxx::builder::stream::document()<< "$set"
+                                       << bsoncxx::builder::stream::open_document
+                                       << "tid"<< block.tid << "uid"<< block.uid<< "isDone"<< block.isDone << "title" << block.title<< "substring"<< block.substring
+                                       << "hash" << std::to_string(block.hash).c_str()
+                                       << bsoncxx::builder::stream::close_document
+                                       << bsoncxx::builder::stream::finalize);
         }
         catch(mongocxx::exception e)
         {
@@ -173,6 +174,28 @@ bool MongocxxInterface::renameTab(std::string xtid, std::string tid)
         return false;
     }
     return true;
+}
+
+std::vector<uint32_t> MongocxxInterface::getBlockHash(int16_t uid)
+{
+    std::cout<< "[!] Getting Block hashes with uid: "<< uid<<std::endl;
+
+    std::vector<uint32_t> hashVector;
+    try
+    {
+        auto cursor = blockCollection.find(bsoncxx::builder::stream::document() << "uid"<< uid << bsoncxx::builder::stream::finalize);
+        for(auto doc: cursor)
+        {
+            Protocol::Block b(doc);
+            hashVector.push_back(b.hash);
+        }
+    }
+    catch(mongocxx::exception e)
+    {
+        std::cout<<"[E] Exception Occured! Error in getting hashes. "<< e.what()<<std::endl;
+    }
+
+    return hashVector;
 }
 
 

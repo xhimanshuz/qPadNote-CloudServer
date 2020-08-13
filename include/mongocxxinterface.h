@@ -33,13 +33,15 @@ public:
 
     std::vector<Protocol::Block> getBlocks();
 
-    bool putBlock(int64_t _id, const std::string tid, int32_t uid, bool isDone, const std::string title, const std::string substring);
+    bool putBlock(int64_t _id, const std::string tid, int32_t uid, bool isDone, const std::string title, const std::string substring, int32_t hash);
     bool putBlock(Protocol::Block &block);
 
     bool removeBlock(int64_t _id);
     bool removeBlocks(int32_t uid, std::string tid);
     bool removeTab(std::string tid);
     bool renameTab(std::string xtid, std::string tid);
+
+    std::vector<uint32_t> getBlockHash(int16_t uid);
 };
 
 #endif // MONGOCXXINTERFACE_H

@@ -1,6 +1,8 @@
 CONFIG -= qt
 #CONFIG += console
 
+DEFINES += SERVER
+
 HEADERS += \
     include/Block.h \
     include/Protocol.h \

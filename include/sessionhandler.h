@@ -16,27 +16,31 @@ class SessionHandler/*: public std::enable_shared_from_this<SessionHandler>*/
 public:
     std::unique_ptr<boost::asio::ip::tcp::socket> socket;
     SessionHandler(std::unique_ptr<boost::asio::ip::tcp::socket> _socket);
-    void sendData();
-    void sendHeader();
+    void writeAllBlocks();
     void receiveHeader();
-    void receiveBlocks(uint16_t size, uint8_t quantity);
+    void readBlocks(uint16_t size, uint8_t quantity);
     void removeBlock();
     void removeBlocks();
     void requestHandle();
     void BlocksTabRequest(int16_t uid, std::string tid);
     void BlocksAllRequest(int16_t uid);
     bool isObsolete();
-    bool start();
+    void start();
     void deleteTab(std::string tid = "");
     void renameTabRequest();
 
-    void sendBlocks(std::vector<Protocol::Block> blockVector);
-    bool sendHeader(Protocol::TYPE _type, Protocol::TYPE _body, uint16_t _bodySize, uint8_t _quantity);
+    void writeBlocks(std::vector<Protocol::Block> blockVector);
+
+    bool writeHeader(Protocol::TYPE _body, uint16_t _bodySize, uint8_t _quantity);
+    Protocol::Header readHeader();
 
     ~SessionHandler();
 //    std::shared_ptr<SessionHandler> getThis();
     int getSessionId() const;
     void makeObsolete(bool value = true);
+    void hashSync();
+    void writeHashVector(int16_t uid, std::vector<uint32_t> &hashVector);
+    std::pair<int16_t, std::vector<uint32_t>> readHashVector();
 };
 
 #endif // SESSIONHANDLER_H
